@@ -39,14 +39,14 @@ namespace NLox.Lib
         {
             var value = Expression();
             Consume(SEMICOLON, "Expect ';' after value.");
-            return new PrintStmt(value);
+            return new Stmt.Print(value);
         }
 
         private Stmt ExpressionStatement()
         {
             var expr = Expression();
             Consume(SEMICOLON, "Expect ';' after expression.");
-            return new ExprStmt(expr);
+            return new Stmt.Expression(expr);
         }
 
         private Expr Expression() => Equality();
@@ -58,7 +58,7 @@ namespace NLox.Lib
             {
                 var op = Previous();
                 var right = Comp();
-                expr = new Binary(expr, op, right);
+                expr = new Expr.Binary(expr, op, right);
             }
             return expr;
         }
@@ -70,7 +70,7 @@ namespace NLox.Lib
             {
                 var op = Previous();
                 var right = Term();
-                expr = new Binary(expr, op, right);
+                expr = new Expr.Binary(expr, op, right);
             }
             return expr;
         }
@@ -83,7 +83,7 @@ namespace NLox.Lib
             {
                 var op = Previous();
                 var right = Factor();
-                expr = new Binary(expr, op, right);
+                expr = new Expr.Binary(expr, op, right);
             }
 
             return expr;
@@ -97,7 +97,7 @@ namespace NLox.Lib
             {
                 var op = Previous();
                 var right = Unary();
-                expr = new Binary(expr, op, right);
+                expr = new Expr.Binary(expr, op, right);
             }
 
             return expr;
@@ -109,27 +109,27 @@ namespace NLox.Lib
             {
                 var op = Previous();
                 var right = Unary();
-                return new Unary(op, right);
+                return new Expr.Unary(op, right);
             }
             return Primary();
         }
 
         private Expr Primary()
         {
-            if (Match(FALSE)) return new Literal(false);
-            if (Match(TRUE)) return new Literal(true);
-            if (Match(NIL)) return new Literal(null);
+            if (Match(FALSE)) return new Expr.Literal(false);
+            if (Match(TRUE)) return new Expr.Literal(true);
+            if (Match(NIL)) return new Expr.Literal(null);
 
             if (Match(NUMBER, STRING))
             {
-                return new Literal(Previous().Literal);
+                return new Expr.Literal(Previous().Literal);
             }
 
             if (Match(LEFT_PAREN))
             {
                 var expr = Expression();
                 Consume(RIGHT_PAREN, "Expect ')' after experssion.");
-                return new Grouping(expr);
+                return new Expr.Grouping(expr);
             }
 
             throw Error(Peek(), "Expect expression.");
@@ -163,7 +163,7 @@ namespace NLox.Lib
         private Token Consume(TokenType ttype, string message)
         {
             if (Check(ttype)) return Advance();
-            throw Error(Peek(), message);
+             throw Error(Peek(), message);
         }
 
         private ParseError Error(Token token, string message)

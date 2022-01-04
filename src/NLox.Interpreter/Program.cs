@@ -46,10 +46,9 @@ void Run(string source)
     var scanner = new Scanner(source, reporter);
     var tokens = scanner.ScanTokens();
     var parser = new Parser(tokens, reporter);
-    var expr = parser.Parse();
-    interpreter.Interpret(expr);
+    var stmts = parser.Parse();
 
     if (reporter.HadError) return;
 
-
+    interpreter.Interpret(stmts);
 }

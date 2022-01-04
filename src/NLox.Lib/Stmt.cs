@@ -6,31 +6,31 @@ namespace NLox.Lib
 {
     public abstract class Stmt
     {
-        public abstract R Accept<R>(IStmtVisitor<R> visitor);
-    }
+        public abstract R Accept<R>(IVisitor<R> visitor);
 
-    public class ExprStmt : Stmt
-    {
-        public Expr Expression { get; private init; }
-        public override R Accept<R>(IStmtVisitor<R> visitor) => visitor.VisitExprStmtStmt(this);
-        public ExprStmt(Expr expression)
+        public class Expression : Stmt
         {
-            Expression = expression;
+            public Expr ExpressionValue { get; private init; }
+            public override R Accept<R>(IVisitor<R> visitor) => visitor.VisitExpressionStmt(this);
+            public Expression(Expr expressionvalue)
+            {
+                ExpressionValue = expressionvalue;
+            }
         }
-    }
-    public class PrintStmt : Stmt
-    {
-        public Expr Expression { get; private init; }
-        public override R Accept<R>(IStmtVisitor<R> visitor) => visitor.VisitPrintStmtStmt(this);
-        public PrintStmt(Expr expression)
+        public class Print : Stmt
         {
-            Expression = expression;
+            public Expr ExpressionValue { get; private init; }
+            public override R Accept<R>(IVisitor<R> visitor) => visitor.VisitPrintStmt(this);
+            public Print(Expr expressionvalue)
+            {
+                ExpressionValue = expressionvalue;
+            }
         }
-    }
 
-    public interface IStmtVisitor<R>
-    {
-        R VisitExprStmtStmt(ExprStmt expr);
-        R VisitPrintStmtStmt(PrintStmt expr);
+        public interface IVisitor<R>
+        {
+            R VisitExpressionStmt(Expression expr);
+            R VisitPrintStmt(Print expr);
+        }
     }
 }

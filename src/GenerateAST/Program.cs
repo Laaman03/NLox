@@ -18,8 +18,8 @@ var exprTypes = new SubClass[]
 
 var stmtTypes = new SubClass[]
 {
-        new SubClass("Expr", "Expr Expression"),
-        new SubClass("Print", "Expr Expression")
+        new SubClass("Expression", "Expr ExpressionValue"),
+        new SubClass("Print", "Expr ExpressionValue")
 };
 
 defineAst(args[0], "Expr", exprTypes);
@@ -41,7 +41,7 @@ public abstract R Accept<R>(I{baseClass}Visitor<R> visitor);
         return $@"public class {c.Name} : {baseClass}
 {{
 {GetClassMembers(c.Members)}
-public override R Accept<R>(I{baseClass}Visitor<R> visitor) => visitor.Visit{c.Name}{baseClass}(this);
+public override R Accept<R>(IVisitor<R> visitor) => visitor.Visit{c.Name}{baseClass}(this);
 {GetConstructorDef(c.Name, c.Members)}
 }}";
     });
@@ -52,13 +52,15 @@ using System.Collections.Generic;
 
 namespace NLox.Lib
 {{
-{baseClassDef}
+public abstract class {baseClass}
+{{
+public abstract R Accept<R>(IVisitor<R> visitor);
 
 {string.Join("\r\n", subClassDefs)}
 
 {GetIVisitorDef(baseClass, types)}
 }}
-";
+}}";
 
     using var writer = new StreamWriter($"{outDir}\\{baseClass}.cs");
     writer.Write(classDefs);
@@ -96,7 +98,7 @@ static string GetConstructorDef(string className, string properties)
 static string GetIVisitorDef(string baseClass, SubClass[] exprs)
 {
     var methods = exprs.Select(e => $"R Visit{e.Name}{baseClass}({e.Name} expr);");
-    return $@"public interface I{baseClass}Visitor<R>
+    return $@"public interface IVisitor<R>
 {{
 {string.Join("\r\n", methods)}
 }}";

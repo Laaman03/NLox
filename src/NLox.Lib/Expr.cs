@@ -6,57 +6,57 @@ namespace NLox.Lib
 {
     public abstract class Expr
     {
-        public abstract R Accept<R>(IExprVisitor<R> visitor);
-    }
+        public abstract R Accept<R>(IVisitor<R> visitor);
 
-    public class Binary : Expr
-    {
-        public Expr Left { get; private init; }
-        public Token Op { get; private init; }
-        public Expr Right { get; private init; }
-        public override R Accept<R>(IExprVisitor<R> visitor) => visitor.VisitBinaryExpr(this);
-        public Binary(Expr left, Token op, Expr right)
+        public class Binary : Expr
         {
-            Left = left;
-            Op = op;
-            Right = right;
+            public Expr Left { get; private init; }
+            public Token Op { get; private init; }
+            public Expr Right { get; private init; }
+            public override R Accept<R>(IVisitor<R> visitor) => visitor.VisitBinaryExpr(this);
+            public Binary(Expr left, Token op, Expr right)
+            {
+                Left = left;
+                Op = op;
+                Right = right;
+            }
         }
-    }
-    public class Grouping : Expr
-    {
-        public Expr Expression { get; private init; }
-        public override R Accept<R>(IExprVisitor<R> visitor) => visitor.VisitGroupingExpr(this);
-        public Grouping(Expr expression)
+        public class Grouping : Expr
         {
-            Expression = expression;
+            public Expr Expression { get; private init; }
+            public override R Accept<R>(IVisitor<R> visitor) => visitor.VisitGroupingExpr(this);
+            public Grouping(Expr expression)
+            {
+                Expression = expression;
+            }
         }
-    }
-    public class Literal : Expr
-    {
-        public object Value { get; private init; }
-        public override R Accept<R>(IExprVisitor<R> visitor) => visitor.VisitLiteralExpr(this);
-        public Literal(object value)
+        public class Literal : Expr
         {
-            Value = value;
+            public object Value { get; private init; }
+            public override R Accept<R>(IVisitor<R> visitor) => visitor.VisitLiteralExpr(this);
+            public Literal(object value)
+            {
+                Value = value;
+            }
         }
-    }
-    public class Unary : Expr
-    {
-        public Token Op { get; private init; }
-        public Expr Right { get; private init; }
-        public override R Accept<R>(IExprVisitor<R> visitor) => visitor.VisitUnaryExpr(this);
-        public Unary(Token op, Expr right)
+        public class Unary : Expr
         {
-            Op = op;
-            Right = right;
+            public Token Op { get; private init; }
+            public Expr Right { get; private init; }
+            public override R Accept<R>(IVisitor<R> visitor) => visitor.VisitUnaryExpr(this);
+            public Unary(Token op, Expr right)
+            {
+                Op = op;
+                Right = right;
+            }
         }
-    }
 
-    public interface IExprVisitor<R>
-    {
-        R VisitBinaryExpr(Binary expr);
-        R VisitGroupingExpr(Grouping expr);
-        R VisitLiteralExpr(Literal expr);
-        R VisitUnaryExpr(Unary expr);
+        public interface IVisitor<R>
+        {
+            R VisitBinaryExpr(Binary expr);
+            R VisitGroupingExpr(Grouping expr);
+            R VisitLiteralExpr(Literal expr);
+            R VisitUnaryExpr(Unary expr);
+        }
     }
 }

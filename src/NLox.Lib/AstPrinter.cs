@@ -6,21 +6,21 @@ using System.Threading.Tasks;
 
 namespace NLox.Lib
 {
-    public class AstPrinter : IVisitor<string>
+    public class AstPrinter : Expr.IVisitor<string>
     {
-        public string VisitBinaryExpr(Binary expr) =>
+        public string VisitBinaryExpr(Expr.Binary expr) =>
             Parenthesize(expr.Op.Lexeme, expr.Left, expr.Right);
 
-        public string VisitGroupingExpr(Grouping expr) =>
+        public string VisitGroupingExpr(Expr.Grouping expr) =>
             Parenthesize("group", expr.Expression);
 
-        public string VisitLiteralExpr(Literal expr)
+        public string VisitLiteralExpr(Expr.Literal expr)
         {
             if (expr.Value is null) return "nil";
             return expr.Value.ToString();
         }
 
-        public string VisitUnaryExpr(Unary expr) =>
+        public string VisitUnaryExpr(Expr.Unary expr) =>
             Parenthesize(expr.Op.Lexeme, expr.Right);
 
         public string Print(Expr expr)

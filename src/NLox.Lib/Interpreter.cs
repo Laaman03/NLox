@@ -9,26 +9,33 @@ namespace NLox.Lib
 {
     // IStmtVisitor returns int becuase C# can't do void generics
     // So we'll just return 0 always
-    public class Interpreter : IExprVisitor<object>, IStmtVisitor<int>
+    public class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<int>
     {
         private readonly ErrorReporter _reporter;
         public Interpreter(ErrorReporter reporter)
         {
             _reporter = reporter;
         }
-        public void Interpret(Expr expression)
+        public void Interpret(List<Stmt> stmts)
         {
             try
             {
-                object value = Evaluate(expression);
-                Console.WriteLine(Stringify(value));
+                foreach (var stmt in stmts)
+                {
+                    Execute(stmt);
+                }
             }
             catch (RuntimeError error)
             {
                 _reporter.RuntimeError(error);
             }
         }
-        public object VisitBinaryExpr(Binary expr)
+
+        private void Execute(Stmt stmt)
+        {
+            stmt.Accept(this);
+        }
+        public object VisitBinaryExpr(Expr.Binary expr)
         {
             object left = Evaluate(expr.Left);
             object right = Evaluate(expr.Right);
@@ -75,17 +82,17 @@ namespace NLox.Lib
             return null;
         }
 
-        public object VisitGroupingExpr(Grouping expr)
+        public object VisitGroupingExpr(Expr.Grouping expr)
         {
             return Evaluate(expr.Expression);
         }
 
-        public object VisitLiteralExpr(Literal expr)
+        public object VisitLiteralExpr(Expr.Literal expr)
         {
             return expr.Value;
         }
 
-        public object VisitUnaryExpr(Unary expr)
+        public object VisitUnaryExpr(Expr.Unary expr)
         {
             object right = Evaluate(expr.Right);
             switch (expr.Op.Type)
@@ -145,14 +152,17 @@ namespace NLox.Lib
             return obj.ToString();
         }
 
-        public int VisitExprStmt(ExprStmt expr)
+        public int VisitExpressionStmt(Stmt.Expression stmt)
         {
-            Evaluate()
+            Evaluate(stmt.ExpressionValue);
+            return 0;
         }
 
-        public int VisitPrintStmt(PrintStmt expr)
+        public int VisitPrintStmt(Stmt.Print stmt)
         {
-            throw new NotImplementedException();
+            object value = Evaluate(stmt.ExpressionValue);
+            Console.WriteLine(Stringify(value));
+            return 0;
         }
     }
 }
