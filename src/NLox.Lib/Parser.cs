@@ -13,6 +13,10 @@ namespace NLox.Lib
         private readonly ErrorReporter _reporter;
         private int current;
 
+        /// <summary>
+        /// Function to begin parsing a list of statements.
+        /// </summary>
+        /// <returns>A list of statements that the interpreter can consume.</returns>
         public List<Stmt> Parse()
         {
             var statements = new List<Stmt>();
@@ -29,6 +33,11 @@ namespace NLox.Lib
             _reporter = reporter;
         }
 
+        /// <summary>
+        /// The beginning of the parse chain. The parser works by trying to parse the types of
+        /// expression/statements in reverse order of precedence and each function will call the
+        /// a function of superior precedence.
+        /// </summary>
         private Stmt Declaration()
         {
             try
@@ -43,6 +52,11 @@ namespace NLox.Lib
             }
         }
 
+        /// <summary>
+        /// This is sort of a special parsing case. When we decide that we are going to parse a
+        /// variable declaration we get the name, then we set <c>initializer</c> to an <c>Expression</c>
+        /// and return a <c>Stmt.Var</c> with the name and intializer.
+        /// </summary>
         private Stmt VarDeclaration()
         {
             var name = Consume(IDENTIFIER, "Expect variable name.");
@@ -57,6 +71,15 @@ namespace NLox.Lib
             return new Stmt.Var(name, initializer);
         }
 
+        /// <summary>
+        /// Checks if we should parse a <c>print</c>, a block, or an <c>if</c>.
+        /// If none of those are what we are going to be parsing it returns a 
+        /// call to <c>ExpressionStatement</c>.
+        /// <see cref="PrintStatement"/>
+        /// <see cref="Stmt.Block"/>
+        /// <see cref="Block"/>
+        /// <see cref="ExpressionStatement"/>
+        /// </summary>
         private Stmt Statement()
         {
             if (Match(PRINT)) return PrintStatement();
@@ -65,6 +88,11 @@ namespace NLox.Lib
             return ExpressionStatement();
         }
 
+        /// <summary>
+        /// Parses an Expression into a print statement.
+        /// <see cref="Expression"/>
+        /// <see cref="Stmt.Print"/>
+        /// </summary>
         private Stmt PrintStatement()
         {
             var value = Expression();
@@ -72,13 +100,28 @@ namespace NLox.Lib
             return new Stmt.Print(value);
         }
 
-        private Stmt ExpressionStatement()
+        /// <summary>
+        /// Creates a list of statements that are grouped together in a { block }.
+        /// Allows the interpreter to create an environment for block scoped variables.
+        /// <see cref="Declaration"/>
+        /// </summary>
+        private List<Stmt> Block()
         {
-            var expr = Expression();
-            Consume(SEMICOLON, "Expect ';' after expression.");
-            return new Stmt.Expression(expr);
+            List<Stmt> stmts = new();
+            while (!Check(RIGHT_BRACE) && !IsAtEnd())
+            {
+                stmts.Add(Declaration());
+            }
+            Consume(RIGHT_BRACE, "Expect '}' after block.");
+            return stmts;
         }
 
+        /// <summary>
+        /// Creates an <c>if</c> statement with a then branch and an else branch.
+        /// <see cref="Expression"/>
+        /// <see cref="Statement"/>
+        /// <see cref="Stmt.If"/>
+        /// </summary>
         private Stmt IfStatement()
         {
             Consume(LEFT_PAREN, "Expect '(' after 'if'.");
@@ -95,8 +138,40 @@ namespace NLox.Lib
             return new Stmt.If(condition, thenBranch, elseBranch);
         }
 
+        /// <summary>
+        /// Creates a statement from an expression.
+        /// <see cref="Expression"/>
+        /// <see cref="Stmt.Expression"/>
+        /// </summary>
+        /// <returns></returns>
+        private Stmt ExpressionStatement()
+        {
+            var expr = Expression();
+            Consume(SEMICOLON, "Expect ';' after expression.");
+            return new Stmt.Expression(expr);
+        }
+
+        /// <summary>
+        /// This is the beginning of the <c>Expression</c> parse chain. To begin with an
+        /// <c>Expression</c> itself is the lowest precedence of the expression chain. So
+        /// naturally it only makes a call to <c>Assignment</c>
+        /// <see cref="Assignment"/>
+        /// </summary>
+        /// <returns></returns>
         private Expr Expression() => Assignment();
 
+        /// <summary>
+        /// Parser an <c>Assignment</c> expression or any expression of higher precedence.
+        /// <code>
+        /// var a = 1;
+        /// a = 2; // This is a lox assignemnt expression.
+        /// </code>
+        /// A valid expression is also valid for the left side of an assignment expression.
+        /// <code>
+        /// newPoint().y = 1;
+        /// </code>
+        /// </summary>
+        /// <returns></returns>
         private Expr Assignment()
         {
             Expr expr = Or();
@@ -116,6 +191,10 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>Or</c> expression or any expression of higher precedence.
+        /// </summary>
+        /// <returns></returns>
         private Expr Or()
         {
             var expr = And();
@@ -232,17 +311,6 @@ namespace NLox.Lib
             }
 
             throw Error(Peek(), "Expect expression.");
-        }
-
-        private List<Stmt> Block()
-        {
-            List<Stmt> stmts = new();
-            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
-            {
-                stmts.Add(Declaration());
-            }
-            Consume(RIGHT_BRACE, "Expect '}' after block.");
-            return stmts;
         }
 
         private bool Match(params TokenType[] ttypes)
