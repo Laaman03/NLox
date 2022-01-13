@@ -11,6 +11,7 @@ namespace NLox.Lib
     // So we'll just return 0 always
     public class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<int>
     {
+        private Environment env = new();
         private readonly ErrorReporter _reporter;
         public Interpreter(ErrorReporter reporter)
         {
@@ -108,6 +109,31 @@ namespace NLox.Lib
             return null;
         }
 
+        public object VisitLogicalExpr(Expr.Logical expr)
+        {
+            object left = Evaluate(expr.Left);
+
+            if (expr.Op.Type == OR)
+            {
+                if (IsTruthy(left)) return left;
+            }
+            // Must be and
+            else
+            {
+                if (!IsTruthy(left)) return left;
+            }
+            return Evaluate(expr.Right);
+        }
+
+        public object VisitVariableExpr(Expr.Variable expr) => env.Get(expr.Name);
+
+        public object VisitAssignExpr(Expr.Assign expr)
+        {
+            object value = Evaluate(expr.Expression);
+            env.Assign(expr.Name, value);
+            return value;
+        }
+
         private object Evaluate(Expr expr) => expr.Accept(this);
         private bool IsTruthy(object val)
         {
@@ -158,11 +184,58 @@ namespace NLox.Lib
             return 0;
         }
 
+        public int VisitIfStmt(Stmt.If stmt)
+        {
+            if (IsTruthy(Evaluate(stmt.Condition)))
+            {
+                Execute(stmt.ThenBranch);
+            }
+            else if (stmt.ElseBranch != null)
+            {
+                Execute(stmt.ElseBranch);
+            }
+            return 0;
+        }
+
+        public int VisitBlockStmt(Stmt.Block stmt)
+        {
+            ExecuteBlock(stmt.Statements, new Environment(env));
+            return 0;
+        }
+
         public int VisitPrintStmt(Stmt.Print stmt)
         {
             object value = Evaluate(stmt.ExpressionValue);
             Console.WriteLine(Stringify(value));
             return 0;
+        }
+
+        public int VisitVarStmt(Stmt.Var stmt)
+        {
+            object value = null;
+            if (stmt.Initializer is not null)
+            {
+                value = Evaluate(stmt.Initializer);
+            }
+            env.Define(stmt.Name.Lexeme, value);
+            return 0;
+        }
+
+        private void ExecuteBlock(List<Stmt> statements, Environment env)
+        {
+            Environment prev = this.env;
+            try
+            {
+                this.env = env;
+                foreach (var stmt in statements)
+                {
+                    Execute(stmt);
+                }    
+            }
+            finally
+            {
+                this.env = prev;
+            }
         }
     }
 }

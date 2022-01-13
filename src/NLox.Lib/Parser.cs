@@ -18,7 +18,7 @@ namespace NLox.Lib
             var statements = new List<Stmt>();
             while (!IsAtEnd())
             {
-                statements.Add(Statement());
+                statements.Add(Declaration());
             }
             return statements;
         }
@@ -29,9 +29,39 @@ namespace NLox.Lib
             _reporter = reporter;
         }
 
+        private Stmt Declaration()
+        {
+            try
+            {
+                if (Match(VAR)) return VarDeclaration();
+                return Statement();
+            }
+            catch (ParseError e)
+            {
+                Sync();
+                return null;
+            }
+        }
+
+        private Stmt VarDeclaration()
+        {
+            var name = Consume(IDENTIFIER, "Expect variable name.");
+            Expr initializer = null;
+
+            if (Match(EQUAL))
+            {
+                initializer = Expression();
+            }
+
+            Consume(SEMICOLON, "Expect ';' after variable declaration");
+            return new Stmt.Var(name, initializer);
+        }
+
         private Stmt Statement()
         {
             if (Match(PRINT)) return PrintStatement();
+            if (Match(LEFT_BRACE)) return new Stmt.Block(Block());
+            if (Match(IF)) return IfStatement();
             return ExpressionStatement();
         }
 
@@ -49,7 +79,71 @@ namespace NLox.Lib
             return new Stmt.Expression(expr);
         }
 
-        private Expr Expression() => Equality();
+        private Stmt IfStatement()
+        {
+            Consume(LEFT_PAREN, "Expect '(' after 'if'.");
+            Expr condition = Expression();
+            Consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+            Stmt thenBranch = Statement();
+            Stmt elseBranch = null;
+            if (Match(ELSE))
+            {
+                elseBranch = Statement();
+            }
+
+            return new Stmt.If(condition, thenBranch, elseBranch);
+        }
+
+        private Expr Expression() => Assignment();
+
+        private Expr Assignment()
+        {
+            Expr expr = Or();
+            if (Match(EQUAL))
+            {
+                Token equals = Previous();
+                Expr value = Assignment();
+
+                if (expr is Expr.Variable var)
+                {
+                    Token name = var.Name;
+                    return new Expr.Assign(name, value);
+                }
+
+                _reporter.Error(equals, "Invalid assignment target.");
+            }
+            return expr;
+        }
+
+        private Expr Or()
+        {
+            var expr = And();
+
+            while (Match(OR))
+            {
+                var op = Previous();
+                var right = And();
+                expr = new Expr.Logical(expr, op, right);
+            }
+
+            return expr;
+        }
+
+        private Expr And()
+        {
+            var expr = Equality();
+
+            while (Match(AND))
+            {
+                var op = Previous();
+                var right = Equality();
+                expr = new Expr.Logical(expr, op, right);
+            }
+
+            return expr;
+        }
+
         private Expr Equality()
         {
             var expr = Comp();
@@ -125,6 +219,11 @@ namespace NLox.Lib
                 return new Expr.Literal(Previous().Literal);
             }
 
+            if (Match(IDENTIFIER))
+            {
+                return new Expr.Variable(Previous());
+            }
+
             if (Match(LEFT_PAREN))
             {
                 var expr = Expression();
@@ -133,6 +232,17 @@ namespace NLox.Lib
             }
 
             throw Error(Peek(), "Expect expression.");
+        }
+
+        private List<Stmt> Block()
+        {
+            List<Stmt> stmts = new();
+            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+            {
+                stmts.Add(Declaration());
+            }
+            Consume(RIGHT_BRACE, "Expect '}' after block.");
+            return stmts;
         }
 
         private bool Match(params TokenType[] ttypes)
@@ -163,7 +273,7 @@ namespace NLox.Lib
         private Token Consume(TokenType ttype, string message)
         {
             if (Check(ttype)) return Advance();
-             throw Error(Peek(), message);
+            throw Error(Peek(), message);
         }
 
         private ParseError Error(Token token, string message)

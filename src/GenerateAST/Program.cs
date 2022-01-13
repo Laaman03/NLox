@@ -10,16 +10,18 @@ if (args.Length != 1)
 
 var exprTypes = new SubClass[]
 {
-        new SubClass("Binary"   , "Expr Left, Token Op, Expr Right"),
-        new SubClass("Grouping" , "Expr Expression"),
-        new SubClass("Literal"  , "object Value"),
-        new SubClass("Unary"    , "Token Op, Expr Right")
+    new SubClass("Binary"   , "Expr Left, Token Op, Expr Right"),
+    new SubClass("Grouping" , "Expr Expression"),
+    new SubClass("Literal"  , "object Value"),
+    new SubClass("Unary"    , "Token Op, Expr Right"),
+    new SubClass("Variable" , "Token Name"),
 };
 
 var stmtTypes = new SubClass[]
 {
-        new SubClass("Expression", "Expr ExpressionValue"),
-        new SubClass("Print", "Expr ExpressionValue")
+    new SubClass("Expression"   , "Expr ExpressionValue"),
+    new SubClass("Print"        , "Expr ExpressionValue"),
+    new SubClass("Var"          , "Token Name, Expr Initializer"),
 };
 
 defineAst(args[0], "Expr", exprTypes);

@@ -8,7 +8,7 @@ var interpreter = new Interpreter(reporter);
 if (args.Length > 1)
 {
     Console.WriteLine("Usage: nlox [script]");
-    Environment.Exit(64);
+    System.Environment.Exit(64);
 }
 else if (args.Length == 1)
 {
@@ -24,8 +24,8 @@ void RunFile(string filename)
     byte[] bytes = File.ReadAllBytes(filename);
     Run(Encoding.UTF8.GetString(bytes));
 
-    if (reporter.HadError) Environment.Exit(65);
-    if (reporter.HadRuntimeError) Environment.Exit(70);
+    if (reporter.HadError) System.Environment.Exit(65);
+    if (reporter.HadRuntimeError) System.Environment.Exit(70);
 }
 
 void RunPrompt()

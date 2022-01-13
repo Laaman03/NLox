@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLox.Interpreter", "src\NLo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateAST", "src\GenerateAST\GenerateAST.csproj", "{A8136E1D-C867-4722-8E6E-22BC93D0D433}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstSrcGenerator", "src\AstSrcGenerator\AstSrcGenerator.csproj", "{430AEFDD-F4B6-4765-A27D-AE84AC92E8E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{A8136E1D-C867-4722-8E6E-22BC93D0D433}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8136E1D-C867-4722-8E6E-22BC93D0D433}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A8136E1D-C867-4722-8E6E-22BC93D0D433}.Release|Any CPU.Build.0 = Release|Any CPU
+		{430AEFDD-F4B6-4765-A27D-AE84AC92E8E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{430AEFDD-F4B6-4765-A27D-AE84AC92E8E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{430AEFDD-F4B6-4765-A27D-AE84AC92E8E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{430AEFDD-F4B6-4765-A27D-AE84AC92E8E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -37,6 +43,7 @@ Global
 		{ECD73EE5-BAAF-4E81-B446-C3ADD64E51BD} = {785FC126-9179-46DA-BDC2-F92A50AC7415}
 		{6F22EBF0-CEA3-4BA6-BA68-60C9A1F45E28} = {785FC126-9179-46DA-BDC2-F92A50AC7415}
 		{A8136E1D-C867-4722-8E6E-22BC93D0D433} = {785FC126-9179-46DA-BDC2-F92A50AC7415}
+		{430AEFDD-F4B6-4765-A27D-AE84AC92E8E8} = {785FC126-9179-46DA-BDC2-F92A50AC7415}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {12E2886E-E82E-4552-8ED7-51A39601F8E8}
