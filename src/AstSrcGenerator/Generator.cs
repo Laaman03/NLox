@@ -14,11 +14,13 @@ namespace SourceGenerator
             Name = "Stmt",
             NestedClasses = new NestedClass[]
             {
-                new NestedClass { Name = "Block", Fields = "List<Stmt> Statements" },
-                new NestedClass { Name = "Expression", Fields = "Expr ExpressionValue" },
-                new NestedClass { Name = "If", Fields = "Expr Condition, Stmt ThenBranch, Stmt ElseBranch" },
-                new NestedClass { Name = "Print", Fields = "Expr ExpressionValue" },
-                new NestedClass { Name = "Var", Fields = "Token Name, Expr Initializer" },
+                new NestedClass { Name = "Block",       Fields = "List<Stmt> Statements" },
+                new NestedClass { Name = "Expression",  Fields = "Expr ExpressionValue" },
+                new NestedClass { Name = "Function",    Fields = "Token Name, List<Token> Parameters, List<Stmt> Body" },
+                new NestedClass { Name = "Return",      Fields = "Token Keyword, Expr Value" },
+                new NestedClass { Name = "If",          Fields = "Expr Condition, Stmt ThenBranch, Stmt ElseBranch" },
+                new NestedClass { Name = "Print",       Fields = "Expr ExpressionValue" },
+                new NestedClass { Name = "Var",         Fields = "Token Name, Expr Initializer" },
             }
         };
 
@@ -28,13 +30,14 @@ namespace SourceGenerator
             Name = "Expr",
             NestedClasses = new NestedClass[]
             {
-                new NestedClass {Name = "Logical", Fields = "Expr Left, Token Op, Expr Right" },
-                new NestedClass { Name = "Binary", Fields = "Expr Left, Token Op, Expr Right"},
-                new NestedClass { Name = "Grouping", Fields = "Expr Expression"},
-                new NestedClass { Name = "Literal", Fields = "Object Value"},
-                new NestedClass { Name = "Unary", Fields = "Token Op, Expr Right"},
-                new NestedClass { Name = "Variable", Fields = "Token Name"},
-                new NestedClass { Name = "Assign", Fields = "Token Name, Expr Expression"}
+                new NestedClass { Name = "Logical",     Fields = "Expr Left, Token Op, Expr Right" },
+                new NestedClass { Name = "Binary",      Fields = "Expr Left, Token Op, Expr Right"},
+                new NestedClass { Name = "Grouping",    Fields = "Expr Expression"},
+                new NestedClass { Name = "Literal",     Fields = "Object Value"},
+                new NestedClass { Name = "Unary",       Fields = "Token Op, Expr Right"},
+                new NestedClass { Name = "Call",        Fields = "Expr Callee, Token Paren, List<Expr> Arguments" },
+                new NestedClass { Name = "Variable",    Fields = "Token Name"},
+                new NestedClass { Name = "Assign",      Fields  = "Token Name, Expr Expression"}
             }
         };
         public void Execute(GeneratorExecutionContext ctx)

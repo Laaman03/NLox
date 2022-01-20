@@ -36,5 +36,11 @@ namespace NLox.Lib
             Console.Error.WriteLine($"[line {line}] Error {where}: {message}");
             HadError = true;
         }
+
+        public void Reset()
+        {
+            HadError = false;
+            HadRuntimeError = false;
+        }
     }
 }

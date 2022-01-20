@@ -11,11 +11,15 @@ namespace NLox.Lib
     // So we'll just return 0 always
     public class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<int>
     {
-        private Environment env = new();
+        public readonly Environment Globals = new();
+        private Environment env;
         private readonly ErrorReporter _reporter;
+
         public Interpreter(ErrorReporter reporter)
         {
             _reporter = reporter;
+            Globals.Define("clock", new NativeFuncClock());
+            env = Globals;
         }
         public void Interpret(List<Stmt> stmts)
         {
@@ -91,6 +95,28 @@ namespace NLox.Lib
         public object VisitLiteralExpr(Expr.Literal expr)
         {
             return expr.Value;
+        }
+
+        public object VisitCallExpr(Expr.Call expr)
+        {
+            object callee = Evaluate(expr.Callee);
+            if (callee is not ILoxCallable)
+            {
+                throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
+            }
+            List<object> args = new();
+            foreach (Expr arg in expr.Arguments)
+            {
+                args.Add(Evaluate(arg));
+            }
+
+            var func = (ILoxCallable)callee;
+            if (args.Count != func.Arity)
+            {
+                throw new RuntimeError(expr.Paren,
+                    $"Expected {func.Arity} arguments but got {args.Count}.");
+            }
+            return func.Call(this, args);
         }
 
         public object VisitUnaryExpr(Expr.Unary expr)
@@ -210,6 +236,21 @@ namespace NLox.Lib
             return 0;
         }
 
+        public int VisitFunctionStmt(Stmt.Function stmt)
+        {
+            var func = new LoxFunction(stmt);
+            env.Define(stmt.Name.Lexeme, func);
+            return 0;
+        }
+
+        public int VisitReturnStmt(Stmt.Return stmt)
+        {
+            object value = null;
+            if (stmt.Value != null) value = Evaluate(stmt.Value);
+
+            throw new Return(value);
+        }
+
         public int VisitVarStmt(Stmt.Var stmt)
         {
             object value = null;
@@ -221,7 +262,7 @@ namespace NLox.Lib
             return 0;
         }
 
-        private void ExecuteBlock(List<Stmt> statements, Environment env)
+        internal void ExecuteBlock(List<Stmt> statements, Environment env)
         {
             Environment prev = this.env;
             try

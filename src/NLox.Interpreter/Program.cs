@@ -38,6 +38,7 @@ void RunPrompt()
         var line = reader.ReadLine();
         if (line == null) break;
         Run(line);
+        reporter.Reset();
     }
 }
 

@@ -1,0 +1,8 @@
+fun hasReturn() { return 1; }
+fun hasNilReturn() { return; }
+
+fun returnsClock() { return clock(); }
+
+print hasReturn();
+print hasNilReturn();
+print returnsClock();

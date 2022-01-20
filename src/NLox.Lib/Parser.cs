@@ -42,6 +42,7 @@ namespace NLox.Lib
         {
             try
             {
+                if (Match(FUN)) return FunDeclaration("function");
                 if (Match(VAR)) return VarDeclaration();
                 return Statement();
             }
@@ -52,8 +53,30 @@ namespace NLox.Lib
             }
         }
 
+        private Stmt.Function FunDeclaration(string kind)
+        {
+            Token name = Consume(IDENTIFIER, $"Expect {kind} name.");
+            Consume(LEFT_PAREN, $"Expect '(' after {kind} name.");
+            List<Token> parameters = new();
+            if (!Check(RIGHT_PAREN))
+            {
+                do
+                {
+                    if (parameters.Count >= 255)
+                    {
+                        Error(Peek(), "Can't have more than 255 parameters.");
+                    }
+                    parameters.Add(Consume(IDENTIFIER, "Expect parameter name."));
+                } while (Match(COMMA));
+            }
+            Consume(RIGHT_PAREN, "Expect ')' after parameters");
+            Consume(LEFT_BRACE, $"Expect '{{' before {kind} body.");
+            List<Stmt> body = Block();
+            return new Stmt.Function(name, parameters, body);
+        }
+
         /// <summary>
-        /// This is sort of a special parsing case. When we decide that we are going to parse a
+        /// When we decide that we are going to parse a
         /// variable declaration we get the name, then we set <c>initializer</c> to an <c>Expression</c>
         /// and return a <c>Stmt.Var</c> with the name and intializer.
         /// </summary>
@@ -83,6 +106,7 @@ namespace NLox.Lib
         private Stmt Statement()
         {
             if (Match(PRINT)) return PrintStatement();
+            if (Match(RETURN)) return ReturnStatement();
             if (Match(LEFT_BRACE)) return new Stmt.Block(Block());
             if (Match(IF)) return IfStatement();
             return ExpressionStatement();
@@ -98,6 +122,18 @@ namespace NLox.Lib
             var value = Expression();
             Consume(SEMICOLON, "Expect ';' after value.");
             return new Stmt.Print(value);
+        }
+
+        private Stmt ReturnStatement()
+        {
+            var keyword = Previous();
+            Expr value = null;
+            if (!Check(SEMICOLON))
+            {
+                value = Expression();
+            }
+            Consume(SEMICOLON, "Expect ';' after return value.");
+            return new Stmt.Return(keyword, value);
         }
 
         /// <summary>
@@ -194,7 +230,6 @@ namespace NLox.Lib
         /// <summary>
         /// Parse an <c>Or</c> expression or any expression of higher precedence.
         /// </summary>
-        /// <returns></returns>
         private Expr Or()
         {
             var expr = And();
@@ -209,6 +244,9 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>And</c> expression or any expression of higher precedence.
+        /// </summary>
         private Expr And()
         {
             var expr = Equality();
@@ -223,6 +261,9 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>Equality</c> expression or any expression of higher precedence.
+        /// </summary>
         private Expr Equality()
         {
             var expr = Comp();
@@ -236,6 +277,9 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>Comp</c> expression or any expression of higher precedence.
+        /// </summary>
         private Expr Comp()
         {
             var expr = Term();
@@ -248,6 +292,9 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>Term</c> expression or any expression of higher precedence.
+        /// </summary>
         private Expr Term()
         {
             var expr = Factor();
@@ -262,6 +309,9 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>Factor</c> expression or any expression of higher precedence.
+        /// </summary>
         private Expr Factor()
         {
             var expr = Unary();
@@ -276,6 +326,9 @@ namespace NLox.Lib
             return expr;
         }
 
+        /// <summary>
+        /// Parse an <c>Unary</c> expression or any expression of higher precedence.
+        /// </summary>
         private Expr Unary()
         {
             if (Match(BANG, MINUS))
@@ -284,7 +337,46 @@ namespace NLox.Lib
                 var right = Unary();
                 return new Expr.Unary(op, right);
             }
-            return Primary();
+            return Call();
+        }
+
+        /// <summary>
+        /// Parse an <c>Call</c> expression or any expression of higher precedence.
+        /// </summary>
+        private Expr Call()
+        {
+            Expr expr = Primary();
+
+            while (true)
+            {
+                if (Match(LEFT_PAREN))
+                {
+                    expr = FinishCall(expr);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return expr;
+        }
+
+        private Expr FinishCall(Expr callee)
+        {
+            List<Expr> args = new();
+            if (!Check(RIGHT_PAREN))
+            {
+                do
+                {
+                    if (args.Count >= 255) Error(Peek(), "Can't have more than 255 arguments.");
+                    args.Add(Expression());
+                }
+                while (Match(COMMA));
+            }
+
+            // After having parsed all of the args we must encounter another ')'
+            var paren = Consume(RIGHT_PAREN, "Expect ')' after call.");
+            return new Expr.Call(callee, paren, args);
         }
 
         private Expr Primary()
@@ -313,6 +405,11 @@ namespace NLox.Lib
             throw Error(Peek(), "Expect expression.");
         }
 
+        /// <summary>
+        /// Conditionally <c>Advance()</c> upon encountering a token type
+        /// that matches one of the provided <c>ttypes</c>.
+        /// </summary>
+        /// <param name="ttypes"></param>
         private bool Match(params TokenType[] ttypes)
         {
             foreach (var t in ttypes)
@@ -326,18 +423,32 @@ namespace NLox.Lib
             return false;
         }
 
+        /// <summary>
+        /// Check the next token against a given type. DOES NOT ADVANCE.
+        /// </summary>
+        /// <param name="ttype"></param>
         private bool Check(TokenType ttype)
         {
             if (IsAtEnd()) return false;
             return Peek().Type == ttype;
         }
 
+        /// <summary>
+        /// Advance the token cursor by one.
+        /// </summary>
+        /// <returns>The next token in the sequence.</returns>
         private Token Advance()
         {
             if (!IsAtEnd()) current++;
             return Previous();
         }
 
+        /// <summary>
+        /// <c>Advance()</c> if the next token is of the type provided. Throws error otherwise.
+        /// </summary>
+        /// <param name="ttype"></param>
+        /// <param name="message"></param>
+        /// <returns>The next token in the sequence.</returns>
         private Token Consume(TokenType ttype, string message)
         {
             if (Check(ttype)) return Advance();
