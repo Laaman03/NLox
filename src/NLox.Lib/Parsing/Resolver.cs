@@ -54,7 +54,9 @@ namespace NLox.Lib.Parsing
             scopes.Peek()["this"] = true;
             foreach (var method in stmt.Methods)
             {
-                var decl = FunctionType.METHOD;
+                var decl = method.Name.Lexeme == "init" 
+                    ? FunctionType.INITIALIZER 
+                    : FunctionType.METHOD;
                 ResolveFunction(method, decl);
             }
             EndScope();
@@ -92,7 +94,13 @@ namespace NLox.Lib.Parsing
             {
                 _reporter.Error(stmt.Keyword, "Can't return from top-level code.");
             }
-            if (stmt.Value is not null) Resolve(stmt.Value);
+            if (stmt.Value is not null)
+            {
+                if (currentFunctionType == FunctionType.INITIALIZER)
+                {
+                    _reporter.Error(stmt.Keyword, "Can't return a value from an initializer.");
+                }
+            }
             return 0;
         }
         public int VisitWhileStmt(Stmt.While stmt)
@@ -255,6 +263,7 @@ namespace NLox.Lib.Parsing
         {
             NONE,
             FUNCTION,
+            INITIALIZER,
             METHOD,
         }
 

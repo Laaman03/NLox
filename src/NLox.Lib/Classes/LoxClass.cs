@@ -8,17 +8,29 @@ namespace NLox.Lib.Classes
     {
         public string Name { get; private init; }
         private Dictionary<string, LoxFunction> _methods;
+        public int Arity
+        {
+            get
+            {
+                var ctor = FindMethod("init");
+                if (ctor != null) return ctor.Arity;
+                else return 0;
+            }
+        }
         public LoxClass(string name, Dictionary<string, LoxFunction> methods)
         {
             Name = name;
             _methods = methods;
         }
 
-        public int Arity => 0;
-
         public object Call(Interpreter interpreter, List<object> args)
         {
             var instance = new LoxInstance(this);
+            var ctor = FindMethod("init");
+            if (ctor != null)
+            {
+                ctor.Bind(instance).Call(interpreter, args);
+            }
             return instance;
         }
 

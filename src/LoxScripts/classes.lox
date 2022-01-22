@@ -1,11 +1,14 @@
 class LoxClass {
-  foo() { print 1; }
-  bar() { print 2; }
+  init(foo, bar) {
+    this.foo = foo;
+    this.bar = bar;
+  }
+
+  sayFoo() { print this.foo; }
+  sayBar() { print this.bar; }
 }
 
-print LoxClass;
-var a = LoxClass();
+var a = LoxClass("hello", "goobye");
 
-a.foo();
-a.bar();
-a.xyz();
+a.sayFoo();
+a.sayBar();

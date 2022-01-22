@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using NLox.Lib;
-using static NLox.Lib.Common;
+using NLox.Lib.Parsing;
 
 var reporter = new ErrorReporter();
 var interpreter = new Interpreter(reporter);

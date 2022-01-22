@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static NLox.Lib.TokenType;
+using NLox.Lib.Parsing;
+using NLox.Lib.Functions;
+using NLox.Lib.Classes;
+using static NLox.Lib.Parsing.TokenType;
 
 namespace NLox.Lib
 {
@@ -246,7 +249,7 @@ namespace NLox.Lib
             Dictionary<string, LoxFunction> methods = new();
             foreach (var method in stmt.Methods)
             {
-                var func = new LoxFunction(method, env);
+                var func = new LoxFunction(method, env, method.Name.Lexeme == "init");
                 methods.Add(method.Name.Lexeme, func);
             }
 
@@ -257,7 +260,7 @@ namespace NLox.Lib
 
         public int VisitFunctionStmt(Stmt.Function stmt)
         {
-            var func = new LoxFunction(stmt, env);
+            var func = new LoxFunction(stmt, env, false);
             env.Define(stmt.Name.Lexeme, func);
             return 0;
         }
