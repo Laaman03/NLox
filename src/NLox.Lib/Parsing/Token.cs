@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NLox.Lib
+namespace NLox.Lib.Parsing
 {
     public class Token
     {

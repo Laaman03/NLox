@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NLox.Lib.Classes;
 
-namespace NLox.Lib
+namespace NLox.Lib.Functions
 {
     public class LoxFunction : ILoxCallable
     {
@@ -32,6 +33,13 @@ namespace NLox.Lib
                 return returnValue.Value;
             }
             return null;
+        }
+
+        internal LoxFunction Bind(LoxInstance instance)
+        {
+            var env = new Environment(closure);
+            env.Define("this", instance);
+            return new LoxFunction(_decl, env);
         }
         public override string ToString()
         {

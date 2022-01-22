@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "GenerateAST": {
-      "commandName": "Project",
-      "commandLineArgs": "$(SolutionDir)src\\NLox.Lib"
-    }
-  }
-}

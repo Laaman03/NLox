@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static NLox.Lib.TokenType;
+using static NLox.Lib.Parsing.TokenType;
 
-namespace NLox.Lib
+namespace NLox.Lib.Parsing
 {
     public class Scanner
     {

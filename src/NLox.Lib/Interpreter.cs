@@ -120,6 +120,19 @@ namespace NLox.Lib
             return func.Call(this, args);
         }
 
+        public object VisitThisExpr(Expr.This expr) => LookupVariable(expr.Keyword, expr);
+
+        public object VisitGetExpr(Expr.Get expr)
+        {
+            object @object = Evaluate(expr.Owner);
+            if (@object is LoxInstance instance)
+            {
+                return instance.GetProp(expr.Name);
+            }
+
+            throw new RuntimeError(expr.Name, "Only instances have properties.");
+        }
+
         public object VisitUnaryExpr(Expr.Unary expr)
         {
             object right = Evaluate(expr.Right);
@@ -169,6 +182,20 @@ namespace NLox.Lib
             return value;
         }
 
+        public object VisitSetExpr(Expr.Set expr)
+        {
+            object @object = Evaluate(expr.Owner);
+            
+            if (@object is not LoxInstance)
+            {
+                throw new RuntimeError(expr.Name, "Only instances have fields.");
+            }
+
+            var value = Evaluate(expr.Value);
+            ((LoxInstance)@object).Set(expr.Name, value);
+            return value;
+        }
+
         private object Evaluate(Expr expr) => expr.Accept(this);
 
         public int VisitExpressionStmt(Stmt.Expression stmt)
@@ -209,6 +236,22 @@ namespace NLox.Lib
         {
             object value = Evaluate(stmt.ExpressionValue);
             Console.WriteLine(Stringify(value));
+            return 0;
+        }
+
+        public int VisitClassStmt(Stmt.Class stmt)
+        {
+            env.Define(stmt.Name.Lexeme, null);
+
+            Dictionary<string, LoxFunction> methods = new();
+            foreach (var method in stmt.Methods)
+            {
+                var func = new LoxFunction(method, env);
+                methods.Add(method.Name.Lexeme, func);
+            }
+
+            var @class = new LoxClass(stmt.Name.Lexeme, methods);
+            env.Assign(stmt.Name, @class);
             return 0;
         }
 

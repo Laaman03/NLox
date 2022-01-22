@@ -1,4 +1,4 @@
-﻿namespace NLox.Lib
+﻿namespace NLox.Lib.Parsing
 {
     internal enum TokenType
     {

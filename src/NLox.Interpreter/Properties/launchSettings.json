@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "NLox.Interpreter": {
+      "commandName": "Project"
+    },
+    "NLox Classes": {
+      "commandName": "Project",
+      "commandLineArgs": "$(SolutionDir)\\src\\LoxScripts\\classes.lox"
+    }
+  }
+}

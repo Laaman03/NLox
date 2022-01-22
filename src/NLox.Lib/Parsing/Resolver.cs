@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NLox.Lib
+namespace NLox.Lib.Parsing
 {
     public class Resolver : Expr.IVisitor<int>, Stmt.IVisitor<int>
     {
@@ -16,7 +16,11 @@ namespace NLox.Lib
         /// Value:  Is the identifier is in scope?
         /// </summary>
         private readonly Stack<Dictionary<string, bool>> scopes = new();
+
         private FunctionType currentFunctionType = FunctionType.NONE;
+        private ClassType currentClassType = ClassType.NONE;
+
+
         public Resolver(Interpreter interpreter, ErrorReporter reporter)
         {
             _reporter = reporter;
@@ -37,6 +41,24 @@ namespace NLox.Lib
                 Resolve(stmt.Initializer);
             }
             Define(stmt.Name);
+            return 0;
+        }
+        public int VisitClassStmt(Stmt.Class stmt)
+        {
+            var enclosingClass = currentClassType;
+            currentClassType = ClassType.CLASS;
+            Declare(stmt.Name);
+            Define(stmt.Name);
+
+            BeginScope();
+            scopes.Peek()["this"] = true;
+            foreach (var method in stmt.Methods)
+            {
+                var decl = FunctionType.METHOD;
+                ResolveFunction(method, decl);
+            }
+            EndScope();
+            currentClassType = enclosingClass;
             return 0;
         }
         public int VisitFunctionStmt(Stmt.Function stmt)
@@ -93,10 +115,22 @@ namespace NLox.Lib
             return 0;
         }
 
+        public int VisitThisExpr(Expr.This expr)
+        {
+            ResolveLocal(expr, expr.Keyword);
+            return 0;
+        }
+
         public int VisitAssignExpr(Expr.Assign expr)
         {
             Resolve(expr.Expression);
             ResolveLocal(expr, expr.Name);
+            return 0;
+        }
+        public int VisitSetExpr(Expr.Set expr)
+        {
+            Resolve(expr.Value);
+            Resolve(expr.Owner);
             return 0;
         }
         public int VisitBinaryExpr(Expr.Binary expr)
@@ -125,6 +159,12 @@ namespace NLox.Lib
                 Resolve(arg);
             }
 
+            return 0;
+        }
+
+        public int VisitGetExpr(Expr.Get expr)
+        {
+            Resolve(expr.Owner);
             return 0;
         }
 
@@ -215,6 +255,13 @@ namespace NLox.Lib
         {
             NONE,
             FUNCTION,
+            METHOD,
+        }
+
+        private enum ClassType
+        {
+            NONE,
+            CLASS,
         }
     }
 }

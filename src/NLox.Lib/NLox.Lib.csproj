@@ -7,10 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <ProjectReference Include="..\AstSrcGenerator\AstSrcGenerator.csproj"
-						OutputItemType="Analyzer"
-						ReferenceOutputAssembly="false"
-						/>
+	  <ProjectReference Include="..\AstSrcGenerator\AstSrcGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

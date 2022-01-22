@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static NLox.Lib.TokenType;
+using NLox.Lib;
+using static NLox.Lib.Parsing.TokenType;
 
-namespace NLox.Lib
+namespace NLox.Lib.Parsing
 {
     public class Parser
     {
@@ -42,6 +43,7 @@ namespace NLox.Lib
         {
             try
             {
+                if (Match(CLASS)) return ClassDeclaration();
                 if (Match(FUN)) return FunDeclaration("function");
                 if (Match(VAR)) return VarDeclaration();
                 return Statement();
@@ -51,6 +53,21 @@ namespace NLox.Lib
                 Sync();
                 return null;
             }
+        }
+
+        private Stmt.Class ClassDeclaration()
+        {
+            var name = Consume(IDENTIFIER, "Expect class name.");
+            Consume(LEFT_BRACE, "Expect '{' before class definition.");
+
+            List<Stmt.Function> methods = new();
+            while (!Check(RIGHT_BRACE) && !IsAtEnd())
+            {
+                methods.Add(FunDeclaration("method"));
+            }
+
+            Consume(RIGHT_BRACE, "Expect '}' after class definition.");
+            return new Stmt.Class(name, methods);
         }
 
         private Stmt.Function FunDeclaration(string kind)
@@ -289,6 +306,10 @@ namespace NLox.Lib
                     Token name = var.Name;
                     return new Expr.Assign(name, value);
                 }
+                else if (expr is Expr.Get g)
+                {
+                    return new Expr.Set(g.Owner, g.Name, value);
+                }
 
                 _reporter.Error(equals, "Invalid assignment target.");
             }
@@ -421,6 +442,11 @@ namespace NLox.Lib
                 {
                     expr = FinishCall(expr);
                 }
+                else if (Match(DOT))
+                {
+                    var name = Consume(IDENTIFIER, "Expect property name after '.'.");
+                    expr = new Expr.Get(expr, name);
+                }
                 else
                 {
                     break;
@@ -457,6 +483,8 @@ namespace NLox.Lib
             {
                 return new Expr.Literal(Previous().Literal);
             }
+
+            if (Match(THIS)) return new Expr.This(Previous());
 
             if (Match(IDENTIFIER))
             {

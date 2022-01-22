@@ -1,0 +1,11 @@
+class LoxClass {
+  foo() { print 1; }
+  bar() { print 2; }
+}
+
+print LoxClass;
+var a = LoxClass();
+
+a.foo();
+a.bar();
+a.xyz();
