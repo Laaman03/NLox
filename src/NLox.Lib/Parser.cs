@@ -109,6 +109,8 @@ namespace NLox.Lib
             if (Match(RETURN)) return ReturnStatement();
             if (Match(LEFT_BRACE)) return new Stmt.Block(Block());
             if (Match(IF)) return IfStatement();
+            if (Match(WHILE)) return WhileStatement();
+            if (Match(FOR)) return ForStatement();
             return ExpressionStatement();
         }
 
@@ -172,6 +174,72 @@ namespace NLox.Lib
             }
 
             return new Stmt.If(condition, thenBranch, elseBranch);
+        }
+          
+        private Stmt WhileStatement()
+        {
+            Consume(LEFT_PAREN, "Expect '(' after 'while'");
+            var condition = Expression();
+            Consume(RIGHT_PAREN, "Expect ')' after condition");
+            var body = Statement();
+
+            return new Stmt.While(condition, body);
+        }
+
+        private Stmt ForStatement()
+        {
+            Consume(LEFT_PAREN, "Expect '(' after 'for'");
+            Stmt initializer;
+            if (Match(SEMICOLON))
+            {
+                initializer = null;
+            }
+            else if (Match(VAR))
+            {
+                initializer = VarDeclaration();
+            }
+            else
+            {
+                initializer = ExpressionStatement();
+            }
+
+            Expr condition = null;
+            if (!Check(SEMICOLON))
+            {
+                condition = Expression();
+            }
+            Consume(SEMICOLON, "Expect ';' after loop condition");
+
+            Expr incrementer = null;
+            if (!Check(RIGHT_PAREN))
+            {
+                incrementer = Expression();
+            }
+
+            Consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+
+            Stmt body = Statement();
+
+            if (incrementer is not null)
+            {
+                body = new Stmt.Block(
+                    new List<Stmt>()
+                    {
+                        body,
+                        new Stmt.Expression(incrementer)
+                    }
+                );
+            }
+
+            condition ??= new Expr.Literal(true);
+            body = new Stmt.While(condition, body);
+
+            if (initializer is not null)
+            {
+                body = new Stmt.Block(new List<Stmt>() { initializer, body });
+            }
+
+            return body;
         }
 
         /// <summary>

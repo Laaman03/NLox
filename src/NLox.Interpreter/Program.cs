@@ -48,8 +48,12 @@ void Run(string source)
     var tokens = scanner.ScanTokens();
     var parser = new Parser(tokens, reporter);
     var stmts = parser.Parse();
+    var resolver = new Resolver(interpreter, reporter);
 
     if (reporter.HadError) return;
 
+    resolver.Resolve(stmts);
+
+    if (reporter.HadError) return;
     interpreter.Interpret(stmts);
 }

@@ -21,6 +21,7 @@ namespace SourceGenerator
                 new NestedClass { Name = "If",          Fields = "Expr Condition, Stmt ThenBranch, Stmt ElseBranch" },
                 new NestedClass { Name = "Print",       Fields = "Expr ExpressionValue" },
                 new NestedClass { Name = "Var",         Fields = "Token Name, Expr Initializer" },
+                new NestedClass { Name = "While",       Fields = "Expr Condition, Stmt Body" },
             }
         };
 

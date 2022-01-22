@@ -13,12 +13,13 @@ namespace NLox.Lib
     {
         public readonly Environment Globals = new();
         private Environment env;
+        private readonly Dictionary<Expr, int> locals = new();
         private readonly ErrorReporter _reporter;
 
         public Interpreter(ErrorReporter reporter)
         {
             _reporter = reporter;
-            Globals.Define("clock", new NativeFuncClock());
+            NativeFunctions.DefineGlobals(Globals);
             env = Globals;
         }
         public void Interpret(List<Stmt> stmts)
@@ -151,16 +152,126 @@ namespace NLox.Lib
             return Evaluate(expr.Right);
         }
 
-        public object VisitVariableExpr(Expr.Variable expr) => env.Get(expr.Name);
+        public object VisitVariableExpr(Expr.Variable expr) => LookupVariable(expr.Name, expr);
 
         public object VisitAssignExpr(Expr.Assign expr)
         {
             object value = Evaluate(expr.Expression);
-            env.Assign(expr.Name, value);
+            if (locals.TryGetValue(expr, out var distance))
+            {
+                env.AssignAt(distance, expr.Name, value);
+            }
+            else
+            {
+                Globals.Assign(expr.Name, value);
+            }
+
             return value;
         }
 
         private object Evaluate(Expr expr) => expr.Accept(this);
+
+        public int VisitExpressionStmt(Stmt.Expression stmt)
+        {
+            Evaluate(stmt.ExpressionValue);
+            return 0;
+        }
+
+        public int VisitIfStmt(Stmt.If stmt)
+        {
+            if (IsTruthy(Evaluate(stmt.Condition)))
+            {
+                Execute(stmt.ThenBranch);
+            }
+            else if (stmt.ElseBranch != null)
+            {
+                Execute(stmt.ElseBranch);
+            }
+            return 0;
+        }
+
+        public int VisitWhileStmt(Stmt.While stmt)
+        {
+            while (IsTruthy(Evaluate(stmt.Condition)))
+            {
+                Execute(stmt.Body);
+            }
+            return 0;
+        }
+
+        public int VisitBlockStmt(Stmt.Block stmt)
+        {
+            ExecuteBlock(stmt.Statements, new Environment(env));
+            return 0;
+        }
+
+        public int VisitPrintStmt(Stmt.Print stmt)
+        {
+            object value = Evaluate(stmt.ExpressionValue);
+            Console.WriteLine(Stringify(value));
+            return 0;
+        }
+
+        public int VisitFunctionStmt(Stmt.Function stmt)
+        {
+            var func = new LoxFunction(stmt, env);
+            env.Define(stmt.Name.Lexeme, func);
+            return 0;
+        }
+
+        public int VisitReturnStmt(Stmt.Return stmt)
+        {
+            object value = null;
+            if (stmt.Value != null) value = Evaluate(stmt.Value);
+
+            throw new Return(value);
+        }
+
+        public int VisitVarStmt(Stmt.Var stmt)
+        {
+            object value = null;
+            if (stmt.Initializer is not null)
+            {
+                value = Evaluate(stmt.Initializer);
+            }
+            env.Define(stmt.Name.Lexeme, value);
+            return 0;
+        }
+
+        public object LookupVariable(Token name, Expr expr)
+        {
+            if (locals.TryGetValue(expr, out var distance))
+            {
+                return env.GetAt(distance, name.Lexeme);
+            }
+            else
+            {
+                return Globals.Get(name);
+            }
+        }
+
+        internal void ExecuteBlock(List<Stmt> statements, Environment env)
+        {
+            Environment prev = this.env;
+            try
+            {
+                this.env = env;
+                foreach (var stmt in statements)
+                {
+                    Execute(stmt);
+                }    
+            }
+            finally
+            {
+                this.env = prev;
+            }
+        }
+
+        public void Resolve(Expr expr, int depth)
+        {
+            locals.Add(expr, depth);
+        }
+        
         private bool IsTruthy(object val)
         {
             if (val == null) return false;
@@ -202,81 +313,6 @@ namespace NLox.Lib
                 return text;
             }
             return obj.ToString();
-        }
-
-        public int VisitExpressionStmt(Stmt.Expression stmt)
-        {
-            Evaluate(stmt.ExpressionValue);
-            return 0;
-        }
-
-        public int VisitIfStmt(Stmt.If stmt)
-        {
-            if (IsTruthy(Evaluate(stmt.Condition)))
-            {
-                Execute(stmt.ThenBranch);
-            }
-            else if (stmt.ElseBranch != null)
-            {
-                Execute(stmt.ElseBranch);
-            }
-            return 0;
-        }
-
-        public int VisitBlockStmt(Stmt.Block stmt)
-        {
-            ExecuteBlock(stmt.Statements, new Environment(env));
-            return 0;
-        }
-
-        public int VisitPrintStmt(Stmt.Print stmt)
-        {
-            object value = Evaluate(stmt.ExpressionValue);
-            Console.WriteLine(Stringify(value));
-            return 0;
-        }
-
-        public int VisitFunctionStmt(Stmt.Function stmt)
-        {
-            var func = new LoxFunction(stmt);
-            env.Define(stmt.Name.Lexeme, func);
-            return 0;
-        }
-
-        public int VisitReturnStmt(Stmt.Return stmt)
-        {
-            object value = null;
-            if (stmt.Value != null) value = Evaluate(stmt.Value);
-
-            throw new Return(value);
-        }
-
-        public int VisitVarStmt(Stmt.Var stmt)
-        {
-            object value = null;
-            if (stmt.Initializer is not null)
-            {
-                value = Evaluate(stmt.Initializer);
-            }
-            env.Define(stmt.Name.Lexeme, value);
-            return 0;
-        }
-
-        internal void ExecuteBlock(List<Stmt> statements, Environment env)
-        {
-            Environment prev = this.env;
-            try
-            {
-                this.env = env;
-                foreach (var stmt in statements)
-                {
-                    Execute(stmt);
-                }    
-            }
-            finally
-            {
-                this.env = prev;
-            }
         }
     }
 }

@@ -41,6 +41,11 @@ namespace NLox.Lib
             throw new RuntimeError(name, "Variable not found.");
         }
 
+        public void AssignAt(int distance, Token name, object value)
+        {
+            Ancestor(distance).values[name.Lexeme] = value;
+        }
+
         public object Get(Token name)
         {
             if (values.TryGetValue(name.Lexeme, out object value))
@@ -52,6 +57,21 @@ namespace NLox.Lib
                 return _enclosing.Get(name);
             }
             throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
+        }
+
+        public object GetAt(int distance, String name)
+        {
+            return Ancestor(distance).values[name];
+        }
+
+        public Environment Ancestor(int distance)
+        {
+            var env = this;
+            for (int i = 0; i < distance; i++)
+            {
+                env = env._enclosing;
+            }
+            return env;
         }
 
     }

@@ -9,14 +9,16 @@ namespace NLox.Lib
     public class LoxFunction : ILoxCallable
     {
         private readonly Stmt.Function _decl;
-        public LoxFunction(Stmt.Function decl)
+        private readonly Environment closure;
+        public LoxFunction(Stmt.Function decl, Environment environment)
         {
             _decl = decl;
+            closure = environment;
         }
         public int Arity => _decl.Parameters.Count;
         public object Call(Interpreter interpreter, List<object> args)
         {
-            var env = new Environment(interpreter.Globals);
+            var env = new Environment(closure);
             for (int i = 0; i < args.Count; i++)
             {
                 env.Define(_decl.Parameters[i].Lexeme, args[i]);
