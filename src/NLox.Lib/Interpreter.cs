@@ -22,7 +22,6 @@ namespace NLox.Lib
         public Interpreter(ErrorReporter reporter)
         {
             _reporter = reporter;
-            NativeFunctions.DefineGlobals(Globals);
             env = Globals;
         }
         public void Interpret(List<Stmt> stmts)
@@ -115,7 +114,7 @@ namespace NLox.Lib
             }
 
             var func = (ILoxCallable)callee;
-            if (args.Count != func.Arity)
+            if (args.Count != func.Arity && func.Arity != -1)
             {
                 throw new RuntimeError(expr.Paren,
                     $"Expected {func.Arity} arguments but got {args.Count}.");

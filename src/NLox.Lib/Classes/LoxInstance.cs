@@ -13,7 +13,6 @@ namespace NLox.Lib.Classes
         public LoxInstance(LoxClass loxClass)
         {
             @class = loxClass;
-            props.Add("__zero", 0);
         }
 
         public override string ToString() => $"{@class.Name} instance";
